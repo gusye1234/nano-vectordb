@@ -54,7 +54,7 @@ def normalize(a: np.ndarray) -> np.ndarray:
 class NanoVectorDB:
     embedding_dim: int
     metric: Literal["cosine"] = "cosine"
-    storage_file: str = None
+    storage_file: str = "nano-vectordb.json"
 
     def pre_process(self):
         if self.metric == "cosine":
