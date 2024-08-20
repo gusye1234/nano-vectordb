@@ -10,7 +10,7 @@ def test_init():
     fake_dim = 1024
 
     start = time()
-    a = NanoVectorDB(fake_dim, storage_file="test.json")
+    a = NanoVectorDB(fake_dim)
     print("Load", time() - start)
 
     fake_embeds = np.random.rand(data_len, fake_dim)
@@ -20,10 +20,11 @@ def test_init():
     print("Upsert", time() - start)
     a.save()
 
-    a = NanoVectorDB(fake_dim, storage_file="test.json")
+    a = NanoVectorDB(fake_dim)
 
     start = time()
     r = a.query(np.random.rand(fake_dim), 10)
     print("Query", time() - start)
     assert len(r) > 0
     print(r)
+    os.remove("nano-vectordb.json")
