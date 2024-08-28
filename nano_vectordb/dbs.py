@@ -116,9 +116,9 @@ class NanoVectorDB:
         left_data = []
         delete_index = []
         for i, data in enumerate(self.__storage["data"]):
-            if data["__id__"] in ids:
+            if data[f_ID] in ids:
                 delete_index.append(i)
-                ids.remove(data["__id__"])
+                ids.remove(data[f_ID])
                 if len(ids) == 0:
                     break
             else:
