@@ -6,8 +6,12 @@
     <a href="https://pypi.org/project/nano-vectordb/">
       <img src="https://img.shields.io/pypi/v/nano-vectordb.svg">
     </a>
+    <a href="https://codecov.io/github/gusye1234/nano-vectordb" > 
+ <img src="https://codecov.io/github/gusye1234/nano-vectordb/graph/badge.svg?token=3ACScwuv4h"/> 
+ </a>
   </p>
 </div>
+
 
 
 
