@@ -119,8 +119,6 @@ class NanoVectorDB:
             if data[f_ID] in ids:
                 delete_index.append(i)
                 ids.remove(data[f_ID])
-                if len(ids) == 0:
-                    break
             else:
                 left_data.append(data)
         self.__storage["data"] = left_data
@@ -135,6 +133,9 @@ class NanoVectorDB:
         }
         with open(self.storage_file, "w") as f:
             json.dump(storage, f, ensure_ascii=False)
+
+    def __len__(self):
+        return len(self.__storage["data"])
 
     def query(
         self, query: np.ndarray, top_k: int = 10, better_than_threshold: float = None

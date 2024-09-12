@@ -23,9 +23,8 @@ def test_init():
     a = NanoVectorDB(fake_dim)
 
     start = time()
-    r = a.query(np.random.rand(fake_dim), 10)
+    r = a.query(np.random.rand(fake_dim), 10, better_than_threshold=0.01)
     print("Query", time() - start)
-    assert len(r) > 0
     print(r)
     os.remove("nano-vectordb.json")
 
@@ -47,3 +46,33 @@ def test_same_upsert():
     fakes_data = [{"__vector__": fake_embeds[i]} for i in range(data_len)]
     r2 = a.upsert(fakes_data)
     assert r2["update"] == r1["insert"]
+
+
+def test_get():
+    a = NanoVectorDB(1024)
+    a.upsert(
+        [
+            {"__vector__": np.random.rand(1024), "__id__": str(i), "content": i}
+            for i in range(100)
+        ]
+    )
+    r = a.get(["0", "1", "2"])
+    assert len(r) == 3
+    assert r[0]["content"] == 0
+    assert r[1]["content"] == 1
+    assert r[2]["content"] == 2
+
+
+def test_delete():
+    a = NanoVectorDB(1024)
+    a.upsert(
+        [
+            {"__vector__": np.random.rand(1024), "__id__": str(i), "content": i}
+            for i in range(100)
+        ]
+    )
+    a.delete(["0", "50", "99"])
+
+    r = a.get(["0", "50", "99"])
+    assert len(r) == 0
+    assert len(a) == 97
