@@ -134,7 +134,7 @@ class NanoVectorDB:
             "matrix": array_to_buffer_string(self.__storage["matrix"]),
         }
         with open(self.storage_file, "w") as f:
-            json.dump(storage, f)
+            json.dump(storage, f, ensure_ascii=False)
 
     def query(
         self, query: np.ndarray, top_k: int = 10, better_than_threshold: float = None
