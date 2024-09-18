@@ -131,7 +131,7 @@ class NanoVectorDB:
             **self.__storage,
             "matrix": array_to_buffer_string(self.__storage["matrix"]),
         }
-        with open(self.storage_file, "w") as f:
+        with open(self.storage_file, "w", encoding="utf-8") as f:
             json.dump(storage, f, ensure_ascii=False)
 
     def __len__(self):
