@@ -138,19 +138,33 @@ class NanoVectorDB:
         return len(self.__storage["data"])
 
     def query(
-        self, query: np.ndarray, top_k: int = 10, better_than_threshold: float = None
-    ):
+        self,
+        query: np.ndarray,
+        top_k: int = 10,
+        better_than_threshold: float = None,
+        filter_lambda: callable = None,
+    ) -> list[dict]:
         return self.usable_metrics[self.metric](query, top_k, better_than_threshold)
 
     def _cosine_query(
-        self, query: np.ndarray, top_k: int, better_than_threshold: float
+        self,
+        query: np.ndarray,
+        top_k: int,
+        better_than_threshold: float,
+        filter_lambda: callable = None,
     ):
         query = normalize(query)
-        scores = np.dot(self.__storage["matrix"], query)
+        if filter_lambda is None:
+            use_matrix = self.__storage["matrix"]
+            filter_index = np.arange(len(self.__storage["data"]))
+        else:
+            raise NotImplementedError("Filter lambda not implemented")
+        scores = np.dot(use_matrix, query)
         sort_index = np.argsort(scores)[-top_k:]
         sort_index = sort_index[::-1]
+        sort_abs_index = filter_index[sort_index]
         results = []
-        for i in sort_index:
+        for i in sort_abs_index:
             if better_than_threshold is not None and scores[i] < better_than_threshold:
                 break
             results.append({**self.__storage["data"][i], f_METRICS: scores[i]})

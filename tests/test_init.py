@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from nano_vectordb import NanoVectorDB
+from nano_vectordb.dbs import f_METRICS, f_ID, f_VECTOR
 
 
 def test_init():
@@ -14,7 +15,8 @@ def test_init():
     print("Load", time() - start)
 
     fake_embeds = np.random.rand(data_len, fake_dim)
-    fakes_data = [{"__vector__": fake_embeds[i]} for i in range(data_len)]
+    fakes_data = [{f_VECTOR: fake_embeds[i], f_ID: i} for i in range(data_len)]
+    query_data = fake_embeds[data_len // 2]
     start = time()
     r = a.upsert(fakes_data)
     print("Upsert", time() - start)
@@ -23,9 +25,12 @@ def test_init():
     a = NanoVectorDB(fake_dim)
 
     start = time()
-    r = a.query(np.random.rand(fake_dim), 10, better_than_threshold=0.01)
-    print("Query", time() - start)
+    r = a.query(query_data, 10, better_than_threshold=0.01)
+    assert r[0][f_ID] == data_len // 2
     print(r)
+    assert len(r) <= 10
+    for d in r:
+        assert d[f_METRICS] >= 0.01
     os.remove("nano-vectordb.json")
 
 
@@ -40,10 +45,10 @@ def test_same_upsert():
     print("Load", time() - start)
 
     fake_embeds = np.random.rand(data_len, fake_dim)
-    fakes_data = [{"__vector__": fake_embeds[i]} for i in range(data_len)]
+    fakes_data = [{f_VECTOR: fake_embeds[i]} for i in range(data_len)]
     r1 = a.upsert(fakes_data)
     assert len(r1["insert"]) == len(fakes_data)
-    fakes_data = [{"__vector__": fake_embeds[i]} for i in range(data_len)]
+    fakes_data = [{f_VECTOR: fake_embeds[i]} for i in range(data_len)]
     r2 = a.upsert(fakes_data)
     assert r2["update"] == r1["insert"]
 
@@ -52,7 +57,7 @@ def test_get():
     a = NanoVectorDB(1024)
     a.upsert(
         [
-            {"__vector__": np.random.rand(1024), "__id__": str(i), "content": i}
+            {f_VECTOR: np.random.rand(1024), f_ID: str(i), "content": i}
             for i in range(100)
         ]
     )
@@ -67,7 +72,7 @@ def test_delete():
     a = NanoVectorDB(1024)
     a.upsert(
         [
-            {"__vector__": np.random.rand(1024), "__id__": str(i), "content": i}
+            {f_VECTOR: np.random.rand(1024), f_ID: str(i), "content": i}
             for i in range(100)
         ]
     )
