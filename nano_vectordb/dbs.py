@@ -33,7 +33,7 @@ def buffer_string_to_array(base64_str: str, dtype=Float) -> np.ndarray:
 def load_storage(file_name) -> Union[DataBase, None]:
     if not os.path.exists(file_name):
         return None
-    with open(file_name) as f:
+    with open(file_name, encoding="utf-8") as f:
         data = json.load(f)
     data["matrix"] = buffer_string_to_array(data["matrix"]).reshape(
         -1, data["embedding_dim"]
