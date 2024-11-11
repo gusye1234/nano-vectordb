@@ -21,6 +21,8 @@
 
 🏃 It's okay for your prototypes, maybe even more.
 
+🏃 Support naive [multi-tenancy](#Multi-Tenancy).
+
 
 
 ## Install
@@ -105,6 +107,43 @@ vdb.save()
 # get and delete the inserted data
 print(vdb.get(r["insert"]))
 vdb.delete(r["insert"])
+```
+
+### Additional Data
+
+```python
+vdb.store_additional_data(a=1, b=2, c=3)
+print(vdb.get_additional_data())
+```
+
+
+
+## Multi-Tenancy (beta)
+
+If you have multiple vectorDB to use, you can use `MultiTenantNanoVDB` to manage:
+
+```python
+from nano_vectordb import NanoVectorDB, MultiTenantNanoVDB
+
+multi_tenant = MultiTenantNanoVDB(1024)
+tenant_id = multi_tenant.create_tenant()
+
+# tenant is a NanoVectorDB, you can upsert, query, get... on this.
+tenant: NanoVectorDB = multi_tenant.get_tenant(tenant_id)
+
+# some chores:
+multi_tenant.delete_tenant(tenant_id)
+multi_tenant.contain_tenant(tenant_id)
+
+# save it
+multi_tenant.save()
+```
+
+`MultiTenantNanoVDB` use a queue to manage the total vector dbs in memory, you can adjust the parameter:
+
+```python
+# There will be only `max_capacity` NanoVectorDB in the memory.
+multi_tenant = MultiTenantNanoVDB(1024, max_capacity=1)
 ```
 
 

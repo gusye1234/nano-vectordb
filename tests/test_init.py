@@ -1,6 +1,7 @@
 import os
+import pytest
 import numpy as np
-from nano_vectordb import NanoVectorDB
+from nano_vectordb import NanoVectorDB, MultiTenantNanoVDB
 from nano_vectordb.dbs import f_METRICS, f_ID, f_VECTOR
 
 
@@ -101,3 +102,60 @@ def test_cond_filter():
 
     r = a.query(query_data, 10, filter_lambda=cond_filer)
     assert r[0][f_ID] == 1
+
+
+def test_additonal_data():
+    data_len = 10
+    fake_dim = 1024
+
+    a = NanoVectorDB(fake_dim)
+
+    a.store_additional_data(a=1, b=2, c=3)
+    a.save()
+
+    a = NanoVectorDB(fake_dim)
+    assert a.get_additional_data() == {"a": 1, "b": 2, "c": 3}
+    os.remove("nano-vectordb.json")
+
+
+def remove_non_empty_dir(dir_path):
+    for f in os.listdir(dir_path):
+        os.remove(os.path.join(dir_path, f))
+    os.rmdir(dir_path)
+
+
+def test_multi_tenant():
+    with pytest.raises(ValueError):
+        multi_tenant = MultiTenantNanoVDB(1024, max_capacity=0)
+
+    multi_tenant = MultiTenantNanoVDB(1024)
+    tenant_id = multi_tenant.create_tenant()
+    tenant = multi_tenant.get_tenant(tenant_id)
+
+    tenant.store_additional_data(a=1, b=2, c=3)
+    multi_tenant.save()
+
+    multi_tenant = MultiTenantNanoVDB(1024)
+    assert multi_tenant.contain_tenant(tenant_id)
+    tenant = multi_tenant.get_tenant(tenant_id)
+    assert tenant.get_additional_data() == {"a": 1, "b": 2, "c": 3}
+
+    with pytest.raises(ValueError):
+        multi_tenant.get_tenant("1")  # not a uuid
+
+    multi_tenant = MultiTenantNanoVDB(1024, max_capacity=1)
+    multi_tenant.create_tenant()
+    multi_tenant.get_tenant(tenant_id)
+
+    multi_tenant.delete_tenant(tenant_id)
+
+    multi_tenant = MultiTenantNanoVDB(1024)
+    assert not multi_tenant.contain_tenant(tenant_id)
+    remove_non_empty_dir("nano_multi_tenant_storage")
+
+    multi_tenant = MultiTenantNanoVDB(1024, max_capacity=1)
+    multi_tenant.create_tenant()
+    assert not os.path.exists("nano_multi_tenant_storage")
+    multi_tenant.create_tenant()
+    assert os.path.exists("nano_multi_tenant_storage")
+    remove_non_empty_dir("nano_multi_tenant_storage")
