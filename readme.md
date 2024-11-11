@@ -118,7 +118,7 @@ print(vdb.get_additional_data())
 
 
 
-## Multi-Tenancy (beta)
+## Multi-Tenancy
 
 If you have multiple vectorDB to use, you can use `MultiTenantNanoVDB` to manage:
 
