@@ -61,7 +61,7 @@ You can add any fields to a data. But there are two keywords:
 - `__id__`: If passed, `NanoVectorDB` will use your id, otherwise a generated id will be used.
 - `__vector__`: must pass, your embedding `np.ndarray`.
 
-**Init a DB**:
+### Init a DB
 
 ```python
 vdb = NanoVectorDB(fake_dim, storage_file="fool.json")
@@ -69,27 +69,37 @@ vdb = NanoVectorDB(fake_dim, storage_file="fool.json")
 
 Next time you init `vdb` from `fool.json`, `NanoVectorDB` will load the index automatically.
 
-**Upsert**:
+### Upsert
 
 ```python
 r = vdb.upsert(fakes_data)
 print(r["update"], r["insert"])
 ```
 
-**Query**:
+### Query
 
 ```python
-print(vdb.query(np.random.rand(fake_dim)))
+# query with embedding 
+vdb.query(np.random.rand(fake_dim))
+
+# arguments:
+vdb.query(np.random.rand(fake_dim), top_k=5, better_than_threshold=0.01)
 ```
 
-**Save**:
+#### Conditional filter
+
+```python
+vdb.query(np.random.rand(fake_dim), filter_lambda=lambda x: x["any_field"] == "any_value")
+```
+
+### Save
 
 ```python
 # will create/overwrite 'fool.json'
 vdb.save()
 ```
 
-**Get, Delete**:
+### Get, Delete
 
 ```python
 # get and delete the inserted data

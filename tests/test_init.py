@@ -81,3 +81,23 @@ def test_delete():
     r = a.get(["0", "50", "99"])
     assert len(r) == 0
     assert len(a) == 97
+
+
+def test_cond_filter():
+    data_len = 10
+    fake_dim = 1024
+
+    a = NanoVectorDB(fake_dim)
+    fake_embeds = np.random.rand(data_len, fake_dim)
+    cond_filer = lambda x: x[f_ID] == 1
+
+    fakes_data = [{f_VECTOR: fake_embeds[i], f_ID: i} for i in range(data_len)]
+    query_data = fake_embeds[data_len // 2]
+    a.upsert(fakes_data)
+
+    assert len(a) == data_len
+    r = a.query(query_data, 10, better_than_threshold=0.01)
+    assert r[0][f_ID] == data_len // 2
+
+    r = a.query(query_data, 10, filter_lambda=cond_filer)
+    assert r[0][f_ID] == 1

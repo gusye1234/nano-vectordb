@@ -3,9 +3,12 @@ import json
 import base64
 import hashlib
 import numpy as np
-from typing import TypedDict, Literal, Union
+from typing import TypedDict, Literal, Union, Callable
 from dataclasses import dataclass, asdict
+import logging
 from logging import getLogger
+
+logging.basicConfig(level=logging.INFO)
 
 f_ID = "__id__"
 f_VECTOR = "__vector__"
@@ -15,11 +18,8 @@ DataBase = TypedDict(
     "DataBase", {"embedding_dim": int, "data": list[Data], "matrix": np.ndarray}
 )
 Float = np.float32
+ConditionLambda = Callable[[Data], bool]
 logger = getLogger("nano-vectordb")
-import logging
-from time import time
-
-logging.basicConfig(level=logging.INFO)
 
 
 def array_to_buffer_string(array: np.ndarray) -> str:
@@ -142,30 +142,42 @@ class NanoVectorDB:
         query: np.ndarray,
         top_k: int = 10,
         better_than_threshold: float = None,
-        filter_lambda: callable = None,
+        filter_lambda: ConditionLambda = None,
     ) -> list[dict]:
-        return self.usable_metrics[self.metric](query, top_k, better_than_threshold)
+        return self.usable_metrics[self.metric](
+            query, top_k, better_than_threshold, filter_lambda=filter_lambda
+        )
 
     def _cosine_query(
         self,
         query: np.ndarray,
         top_k: int,
         better_than_threshold: float,
-        filter_lambda: callable = None,
+        filter_lambda: ConditionLambda = None,
     ):
         query = normalize(query)
         if filter_lambda is None:
             use_matrix = self.__storage["matrix"]
             filter_index = np.arange(len(self.__storage["data"]))
         else:
-            raise NotImplementedError("Filter lambda not implemented")
+            filter_index = np.array(
+                [
+                    i
+                    for i, data in enumerate(self.__storage["data"])
+                    if filter_lambda(data)
+                ]
+            )
+            use_matrix = self.__storage["matrix"][filter_index]
         scores = np.dot(use_matrix, query)
         sort_index = np.argsort(scores)[-top_k:]
         sort_index = sort_index[::-1]
         sort_abs_index = filter_index[sort_index]
         results = []
-        for i in sort_abs_index:
-            if better_than_threshold is not None and scores[i] < better_than_threshold:
+        for abs_i, rel_i in zip(sort_abs_index, sort_index):
+            if (
+                better_than_threshold is not None
+                and scores[rel_i] < better_than_threshold
+            ):
                 break
-            results.append({**self.__storage["data"][i], f_METRICS: scores[i]})
+            results.append({**self.__storage["data"][abs_i], f_METRICS: scores[rel_i]})
         return results
