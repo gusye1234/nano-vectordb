@@ -76,9 +76,9 @@ def test_delete():
             for i in range(100)
         ]
     )
-    a.delete(["0", "50", "99"])
+    a.delete(["0", "50", "90"])
 
-    r = a.get(["0", "50", "99"])
+    r = a.get(["0", "50", "90"])
     assert len(r) == 0
     assert len(a) == 97
 
