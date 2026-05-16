@@ -139,8 +139,18 @@ class NanoVectorDB:
             **self.__storage,
             "matrix": array_to_buffer_string(self.__storage["matrix"]),
         }
-        with open(self.storage_file, "w", encoding="utf-8") as f:
+        # Atomic write: stream to a sibling .tmp, fsync, then rename. POSIX
+        # rename(2) is atomic on the same filesystem, so a crash or kill mid-
+        # write leaves the on-disk file as either the prior snapshot or the
+        # new one — never a truncated partial JSON that fails to parse on
+        # reload. Without this, a single SIGTERM during a multi-second flush
+        # of a large DB can render the storage file unreadable.
+        tmp_path = self.storage_file + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(storage, f, ensure_ascii=False)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, self.storage_file)
 
     def __len__(self):
         return len(self.__storage["data"])
